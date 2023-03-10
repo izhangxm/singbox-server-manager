@@ -2,27 +2,67 @@ import flask
 import requests
 from argparse import Namespace
 import json
-import yaml
 import subprocess
+import time
 
-service_state_cmd = "systemctl state sing-box"
-service_restart_cmd = "systemctl state sing-box"
-service_stop_cmd = "systemctl state sing-box"
+import ruamel.yaml
+
+
+yaml = ruamel.yaml.YAML()
+
+
+
+service_state_cmd = "systemctl status sing-box"
+service_restart_cmd = "systemctl restart sing-box"
+service_stop_cmd = "systemctl stop sing-box"
+
+
+args = Namespace(dst_server_cfg="/etc/sing-box/config.json", tp_server_cfg="./data/tp_server_cfg.json", users="./data/users.json", subscribe_tp="./data/clash_tp.yaml")
+
+users_db = json.load(open(args.users, 'r'))
+users = users_db['users']
+
+tp_server_cfg = json.load(open(args.tp_server_cfg, 'r'))
+
+
+subscribe_tp = yaml.load(open(args.subscribe_tp, 'r'))
+
+
+# yaml.dump(subscribe_tp, open("ad.yaml",'w+'))
+
+class ServiceState():
+    inactive =  "inactive"
+    active = "active"
+    failed = "faild"
+
 
 def get_service_state():
-    # return active, failed, stoped
-    out = subprocess.Popen(service_state_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIP)
-    a = out.readlins()
-    print(a)
+    # return active, failed, inactive
+    p = subprocess.Popen(service_state_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p.wait()
+    out = p.communicate()[0].decode('utf8')
+    if "Active: inactive" in out:
+        return ServiceState.inactive
+    if "Active: active" in out:
+        return ServiceState.active
+    if "FAILURE" in out:
+        return ServiceState.failed
+    raise Exception(f"unknown state. {out}")
     
 
 def service_op(op="status"):
     # 操作服务状态，并返回操作完成后的结果
-    pass
-
+    cmd = f"systemctl {op} sing-box"
+    p = subprocess.Popen(service_state_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p.wait()
+    time.sleep(1)
+    
+    return get_service_state()
+    
 
 def get_server_config():
     # 返回当前服务器信息，本地调用的功能函数
+    server_state = get_service_state()
     pass
 
 
@@ -58,8 +98,7 @@ def app():
 
 
 if __name__ == "__main__":
-    args = Namespace(dst_server_cfg="/etc/sing-box/config.json", tp_server_cfg="./data/tp_server_cfg.json", users="./data/users.json", subscribe_tp="./data/clash_tp.yaml")
-
-
-
+    # get_service_state()
+    print(service_op("status"))
+    
 
