@@ -109,5 +109,6 @@ outbounds:
         enabled: true
         protocol: smux
         max_connections: 8
+        min_streams: 4
     http:
       type: http

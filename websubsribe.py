@@ -357,7 +357,6 @@ if __name__ == "__main__":
     # print(service_op("status"))
     api_update_server()
     api_subscrib()
-
     # print(service_op("restart"))
 
     # a = get_random_password()

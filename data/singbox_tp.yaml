@@ -3,11 +3,12 @@ dns:
     - tag: fallback
       address: https://dns.cloudflare.com/dns-query
       address_resolver: local
-      address_strategy: prefer_ipv4
-      strategy: prefer_ipv4
+      address_strategy: ipv4_only
+      strategy: ipv4_only
       detour: direct
     - tag: local
       address: 223.5.5.5
+      strategy: prefer_ipv4
       detour: direct
   rules:
     - geosite: cn
@@ -36,7 +37,7 @@ inbounds:
     stack: system
     tag: tun-in
     inet4_address: 172.19.0.1/30
-    inet6_address: fdfe:dcba:9876::1/126
+    # inet6_address: fdfe:dcba:9876::1/126
     auto_route: true
     sniff: true
   - type: mixed
