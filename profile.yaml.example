@@ -16,6 +16,16 @@
 # ==============================================================================
 
 # 用来生成server配置文件的配置文件
+# ---------------
+# 写入目标config的路径
+dst_server_cfg: /etc/sing-box/config.json
+
+# 订阅文件模板
+subscribe_tp: ./data/clash_tp.yaml
+
+
+# 远程调用的rpc密钥
+rpc_key: "adadads"
 
 # 用户相关配置
 users:
@@ -28,8 +38,7 @@ users:
     auth: '123456121'
     password: D4sq9uySspZ+bvMP+Ew0Ww==
 
-# 远程调用的rpc密钥
-rpc_key: "adadads"
+
 
 # dns相关配置
 dns:
