@@ -21,11 +21,18 @@
 dst_server_cfg: /etc/sing-box/config.json
 
 # 订阅文件模板
-subscribe_tp: ./data/clash_tp.yaml
+subscribe_clash_tp: ./data/clash_tp.yaml
+
+subscribe_singbox_tp: ./data/singbox_tp.yaml
 
 
 # 远程调用的rpc密钥
 rpc_key: "adadads"
+
+# 国家和url地址
+contry: us
+server_url: banw01.duorenhezugia.top
+
 
 # 用户相关配置
 users:
@@ -37,8 +44,6 @@ users:
     nickname: 李大宝
     auth: '123456121'
     password: D4sq9uySspZ+bvMP+Ew0Ww==
-
-
 
 # dns相关配置
 dns:
@@ -92,8 +97,17 @@ inbounds:
       content:
         type: http
         listen: 127.0.0.1
-        set_system_proxy: false
 
-contry: us
-server_usl: banw01.duorenhezugia.top
-
+# 这里主要是客户端的一些配置
+outbounds:
+  # 每种协议出站的一些默认设定
+  protocol_defult:
+    shadowsocks:
+      type: shadowsocks
+      udp_over_tcp: false # 打开后与multiplex冲突
+      multiplex:
+        enabled: true
+        protocol: smux
+        max_connections: 8
+    http:
+      type: http
