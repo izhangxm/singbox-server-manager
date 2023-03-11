@@ -235,7 +235,7 @@ def api_subscrib():
     final_outbound =  {
             "type": "selector",
             "tag": "final",
-            "outbounds": all_outbound_tags,
+            "outbounds": all_outbound_tags + ['direct'],
             "default": all_outbound_tags[0]
             }
     
