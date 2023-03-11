@@ -1,0 +1,86 @@
+# -*- coding: utf-8 -*-
+# @author izhangxm
+# Copyright 2017 izhangxm@gmail.com. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+# 用来生成server配置文件的配置文件
+
+# 用户相关配置
+users:
+  xiaohei:
+    nickname: 王小黑
+    auth: '123456'
+    password: D4sq9uySspZ+bvMP+Ew0Ww==
+  dabao:
+    nickname: 李大宝
+    auth: '123456121'
+    password: D4sq9uySspZ+bvMP+Ew0Ww==
+
+# dns相关配置
+dns:
+  strategy: ipv4_only
+  disable_cache: false
+  disable_expire: false
+
+# 入站相关配置
+inbounds:
+  # 涉及到shadowtls的配置
+  shadowtls:
+    # 公共参数，其他版本upate这个配置
+    common:
+      type: shadowtls
+      handshake:
+        server: m.media-amazon.com
+        server_port: 443
+    # v2的特殊扩展
+    v2:
+      password: D4sq9uySspZ+bvMP+Ew0Ww==
+  # 监听的公共配置，其他入站协议根据自己特点update
+  listen:
+    tcp_fast_open: true
+    listen: '::'
+  # 入站的协议，名字为tag
+  interfaces:
+    shadowsocks-in:
+      meta: # 
+        over_shadowtls: true
+        tls_s_port: 4331 # 如果overshadowtls为true，这一项必填
+        support_multiuser: true # 是否支持多用户模式
+        server_s_port: 10100 # 如果不支持，此项必填，需要为每个用户开一个服务端口，注意不能与其他地方冲突
+      content: # 基本模板
+        type: shadowsocks
+        method: 2022-blake3-aes-128-gcm
+        listen: 127.0.0.1
+        password: eeHTjVJuVBjFbtx7tvIQIA==
+    
+    # trojan-in:
+    #   meta:
+    #     over_shadowtls: true
+    #     tls_s_port: 4341
+    #     support_multiuser: true
+    #     server_s_port: 10200 
+    #   content:
+    #     type: trojan
+    #     fallback:
+    #       server: 127.0.0.1
+    #       server_port: 8889
+    #     fallback_for_alpn:
+    #       http/1.1:
+    #         server: 127.0.0.1
+    #         server_port: 8889
+
+contry: us
+server_usl: nandd
+

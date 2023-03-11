@@ -4,41 +4,58 @@ from argparse import Namespace
 import json
 import subprocess
 import time
-
+from pathlib import Path
 import ruamel.yaml
-
+import os
+from base64 import b64encode
+from secrets import token_bytes
+from copy import deepcopy
 
 yaml = ruamel.yaml.YAML()
-
 
 
 service_state_cmd = "systemctl status sing-box"
 service_restart_cmd = "systemctl restart sing-box"
 service_stop_cmd = "systemctl stop sing-box"
 
+# 远程调用的rpc密钥
+rpc_key = "rpckey1235"
 
-args = Namespace(dst_server_cfg="/etc/sing-box/config.json", tp_server_cfg="./data/tp_server_cfg.json", users="./data/users.json", subscribe_tp="./data/clash_tp.yaml")
+# args = Namespace(dst_server_cfg="/etc/sing-box/config.json", tp_server_cfg="./data/tp_server_cfg.json", users="./data/users.json", subscribe_tp="./data/clash_tp.yaml")
+args = Namespace(dst_server_cfg="./runtime/server_tmp_config.json", server_info="./data/server_info.yaml", subscribe_tp="./data/clash_tp.yaml")
 
-users_db = json.load(open(args.users, 'r'))
-users = users_db['users']
-
-tp_server_cfg = json.load(open(args.tp_server_cfg, 'r'))
-
-
-subscribe_tp = yaml.load(open(args.subscribe_tp, 'r'))
-
-
-# yaml.dump(subscribe_tp, open("ad.yaml",'w+'))
 
 class ServiceState():
-    inactive =  "inactive"
+    inactive = "inactive"
     active = "active"
     failed = "faild"
 
 
+def load_server_info():
+    # server_info = json.load(open(args.server_info, 'r'))
+    server_info = yaml.load(open(args.server_info, 'r'))
+    return server_info
+
+
+def get_users_from_db():
+    return load_server_info()['users']
+
+
+def get_subscribe_tp():
+    subscribe_tp = yaml.load(open(args.subscribe_tp, 'r'))
+    return subscribe_tp
+
+def dump_server_config(server_cfg):
+    
+    json.dump(server_cfg, open(args.dst_server_cfg, 'w+'),
+              sort_keys=False, indent=2, separators=(',', ':'))
+    # yaml.dump(subscribe_tp, open(args.dst_server_cfg,'w+'))
+
+
 def get_service_state():
     # return active, failed, inactive
-    p = subprocess.Popen(service_state_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(service_state_cmd, shell=True,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
     out = p.communicate()[0].decode('utf8')
     if "Active: inactive" in out:
@@ -48,22 +65,32 @@ def get_service_state():
     if "FAILURE" in out:
         return ServiceState.failed
     raise Exception(f"unknown state. {out}")
-    
+
+
+def get_random_password():
+    return b64encode(token_bytes(16)).decode()
+
 
 def service_op(op="status"):
     # 操作服务状态，并返回操作完成后的结果
     cmd = f"systemctl {op} sing-box"
-    p = subprocess.Popen(service_state_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(service_state_cmd, shell=True,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
     time.sleep(1)
-    
+
     return get_service_state()
-    
+
 
 def get_server_config():
     # 返回当前服务器信息，本地调用的功能函数
     server_state = get_service_state()
     pass
+
+
+def get_default_resp_data():
+    # 返回值模版
+    return {"code": 1, "info": "ok"}
 
 
 def api_server_log():
@@ -83,13 +110,85 @@ def api_subscrib():
 
 
 def api_user_state():
-    # 查看服务状态和用户状态，流量等
-    pass
+    # TODO 查看服务状态和用户状态，流量等
+    resp_data = get_default_resp_data()
+    try:
+        state = get_service_state()
+        data = {"service": state}
+        resp_data['data'] = data
+
+    except Exception as e:
+        resp_data['code'] = 0
+        resp_data['info'] = 'Failed: ' + str(e)
+    return resp_data
 
 
 def api_update_server():
-    # 读取userconfig，更新到运行目录并重启服务器，然后查看服务器状态
-    pass
+    # 更新服务器参数
+    resp_data = get_default_resp_data()
+    try:
+        # 读取userconfig，更新到运行目录并重启服务器，然后查看服务器状态
+        users = get_users_from_db()
+        server_info = load_server_info()
+        
+        server_cfg_res = {}
+        
+        users_dt = []
+        for uname in users.keys():
+            user = users[uname]
+            users_dt.append({"name": uname, "password": user['password']})
+
+        shadowtls_cfg = server_info['inbounds']['shadowtls']
+        listen_common = server_info['inbounds']['listen']
+
+        shadowtls_tp = shadowtls_cfg['common']
+        shadowtls_tp.update(listen_common)
+        v2_tp = shadowtls_cfg['v2']
+
+        
+        # dns 相关
+        server_cfg_res['dns'] = server_info['dns']
+                
+        
+        # 生成配置文件的inbounds
+        inbounds_res = []
+        interfaces = server_info['inbounds']['interfaces']
+        for tag, interface in interfaces.items():
+            
+            meta = interface["meta"]
+            
+            if meta['over_shadowtls']:
+                s_p = meta['tls_s_port']
+                v1_shadow_tls = deepcopy(shadowtls_tp)
+
+                v1_shadow_tls.update({"listen_port": s_p,"version": 1,"detour": tag})
+                
+                v2_shadow_tls = deepcopy(shadowtls_tp)
+                v2_shadow_tls.update({"listen_port": s_p+1, "version": 2, "detour": tag})
+                v2_shadow_tls.update(v2_tp)
+
+                v3_shadow_tls = deepcopy(shadowtls_tp)
+                v3_shadow_tls.update({"listen_port": s_p+2, "version": 3, "detour": tag, "users":users_dt})
+                
+                inbounds_res += [v1_shadow_tls,v2_shadow_tls,v3_shadow_tls]
+                
+                content = interface['content']
+                content.update(listen_common)
+                content.update({"listen":"127.0.0.1","tag":tag})
+
+                if meta['support_multiuser']:
+                    content.update({"users":users_dt})
+                
+                inbounds_res += [content]
+                
+        server_cfg_res['inbounds'] = inbounds_res
+        dump_server_config(server_cfg_res)
+
+    except Exception as e:
+        resp_data['code'] = 0
+        resp_data['info'] = 'Failed: ' + str(e)
+        raise e
+    return resp_data
 
 
 def app():
@@ -99,6 +198,8 @@ def app():
 
 if __name__ == "__main__":
     # get_service_state()
-    print(service_op("status"))
-    
+    # print(service_op("status"))
+    api_update_server()
 
+    # a = get_random_password()
+    # print(a)
