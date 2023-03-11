@@ -128,6 +128,7 @@ def api_update_server():
         # 读取userconfig，更新到运行目录并重启服务器，然后查看服务器状态
         users = get_users_from_db()
         server_info = load_server_info()
+        users = server_info['users']
         
         server_cfg_res = {}
         
