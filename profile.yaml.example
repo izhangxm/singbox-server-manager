@@ -23,6 +23,8 @@ dst_server_cfg: /etc/sing-box/config.json
 # 订阅文件模板
 subscribe_clash_tp: ./data/clash_tp.yaml
 
+subscribe_clashmeta_tp: ./data/clashmeta_tp.yaml
+
 subscribe_singbox_tp: ./data/singbox_tp.yaml
 
 
@@ -87,16 +89,16 @@ inbounds:
         method: 2022-blake3-aes-128-gcm
         listen: 127.0.0.1
         password: eeHTjVJuVBjFbtx7tvIQIA==
-    http-in:
-      meta:
-        over_shadowtls: true
-        tls_s_port: 5341
-        support_multiuser: true
-        server_s_port: 10200
-        uname_key: username
-      content:
-        type: http
-        listen: 127.0.0.1
+    # http-in:
+    #   meta:
+    #     over_shadowtls: true
+    #     tls_s_port: 5341
+    #     support_multiuser: true
+    #     server_s_port: 10200
+    #     uname_key: username
+    #   content:
+    #     type: http
+    #     listen: 127.0.0.1
 
 # 这里主要是客户端的一些配置
 outbounds:
@@ -112,3 +114,5 @@ outbounds:
         min_streams: 4
     http:
       type: http
+
+

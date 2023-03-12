@@ -1,0 +1,271 @@
+
+mode: rule
+ipv6: false
+log-level: debug # silent / error / warning / info / debug 
+
+# port: 7890                 #本地http代理端口
+# socks-port: 7890           #本地socks5代理端口
+mixed-port: 7890             #本地混合代理(http和socks5合并）端口
+# redir-port: 7892             #本地Linux/macOS Redir代理端口
+
+allow-lan: true
+bind-address:                     #监听IP白名单（当allow-lan：true），只允许列表设备
+  '*'                             #全部设备
+  # 192.168.122.11                #单个ip4地址
+  # "[aaaa::a8aa:ff:fe09:57d8]"   #单个ip6地址
+
+external-controller: 127.0.0.1:9090   #控制器监听地址
+# external-ui: "ui/yacd"              #http服务路径，可以放静态web网页，如yacd的控制面板 可通过`http://NaN/ui`直接使用
+secret: "123456"
+
+enable-process: true
+
+# 嗅探进程模式
+find-process-mode: 'strict'
+
+cfw-latency-timeout: 3000
+cfw-latency-url: 'http://cp.cloudflare.com/generate_204'
+cfw-conn-break-strategy: true
+
+profile:                   #缓存设置(文件位置./cache.db)
+  store-selected: true    #节点状态记忆（若不同配置有同代理名称,设置值共享）
+  store-fake-ip: true      #fake-ip缓存
+
+geodata-mode: true         #【Meta专属】使用geoip.dat数据库(默认：false使用mmdb数据库)
+tcp-concurrent: true         #【Meta专属】TCP连接并发，如果域名解析结果对应多个IP
+
+
+tun:
+  enable: true
+  stack: gvisor # system or gvisor
+  dns-hijack:
+    - any:53
+  auto-redir: true
+  auto-route: true
+  auto-detect-interface: true
+  mtu: 9000               #最大传输单元, 默认值
+
+
+# 嗅探域名 
+sniffer:
+  enable: true
+  ## 对 redir-host 类型识别的流量进行强制嗅探
+  ## 如：Tun、Redir 和 TProxy 并 DNS 为 redir-host 皆属于
+  force-dns-mapping: true
+  ## 对所有未获取到域名的流量进行强制嗅探
+  parse-pure-ip: true
+  # 是否使用嗅探结果作为实际访问，默认 true
+  # 全局配置，优先级低于 sniffer.sniff 实际配置
+  override-destination: true
+  sniffing:
+    - tls
+    - http
+    - udp
+  sniff:
+    # TLS 默认如果不配置 ports 默认嗅探 443
+    TLS:
+      ports: [443, 445]
+    # 默认嗅探 80
+    HTTP:
+      ports: [80, 81]
+  
+  skip-domain:                   #列表中的sni字段，保留mapping结果，不通过嗅探还原域名, 优先级比force-domain高
+  - 'Mijia Cloud'              #米家设备，建议加
+  - 'dlg.io.mi.com'
+  - "+.jd.com"                 # 京东
+  - '+.apple.com'              #苹果域名，建议加
+
+
+# # DNS 服务器配置
+dns:
+  enable: true                 #DNS开关(false/true)
+  listen: 0.0.0.0:7894         #DNS监听地址
+  
+  ipv6: false                  #IP6解析开关；如果为false，将返回ip6结果为空
+
+  enhanced-mode: fake-ip         #DNS模式(redir-host/fake-ip), #【Meta专属】redir-host传递域名，可远程解析
+  fake-ip-range: 198.18.0.1/16       #Fake-IP解析地址池
+  
+
+  # 仅填写 DNS 服务器的 IP 地址, 解析非IP的dns用的dns服务器,只支持纯IP
+  default-nameserver:          
+  - 114.114.114.114
+  - 8.8.8.8
+
+  # 支持 UDP / TCP / DoT / DoH 协议的 DNS 服务，可以指明具体的连接端口号。
+  # 所有 DNS 请求将会直接发送到服务器，不经过任何代理。
+  # Stash 会使用最先获得的解析记录回复 DNS 请求
+  nameserver:
+  # 不建议配置超过 2 个 DNS 服务器，会增加系统功耗 默认DNS服务器，支持udp/tcp/dot/doh/doq
+  - 223.5.5.5
+  - 202.204.48.8
+  
+  fallback:                          #回落DNS服务器，支持udp/tcp/dot/doh/doq
+  - 180.76.76.76
+  - https://dns.cloudflare.com/dns-query
+  
+  fallback-filter:                   #回落DNS服务器过滤
+    geoip: true                      #为真时，不匹配为geoip规则的使用fallback返回结果
+    geoip-code: CN                   #geoip匹配区域设定
+    ipcidr:                          #列表中的ip使用fallback返回解析结果
+    - 240.0.0.0/4
+ 
+  nameserver-policy:
+    "geosite:cn":
+      - 223.6.6.6
+
+  # 在以下列表的域名将不会被解析为 fake ip，这些域名相关的解析请求将会返回它们真实的 IP 地址
+  fake-ip-filter:
+  # from: https://github.com/Kr328/ClashForAndroid/blob/ffa559a57102ed8bc20eba41aa236a7764741bf9/core/src/main/golang/native/config/defaults.go#L10
+  - '*.lan'
+
+  # Stun Services
+  - '+.stun.*.*'
+  - '+.stun.*.*.*'
+  - '+.stun.*.*.*.*'
+  - '+.stun.*.*.*.*.*'
+  
+  # Google Voices
+  - 'lens.l.google.com'
+  
+  # Nintendo Switch
+  - '*.n.n.srv.nintendo.net'
+  
+  # PlayStation
+  - '+.stun.playstation.net'
+  
+  # XBox
+  - 'xbox.*.*.microsoft.com'
+  - '*.*.xboxlive.com'
+
+  # Microsoft
+  - '*.msftncsi.com'
+  - '*.msftconnecttest.com'
+
+  # Bilibili CDN
+  - '*.mcdn.bilivideo.cn'
+
+  # Apple
+  - '*.apple.com'
+  - '*.apple.com.cn'
+  - '*.icloud.com'
+  - '*.icloud.com.cn'
+  - localhost.ptlogin2.qq.com
+
+
+proxies: []
+
+proxy-groups:
+- name: US
+  type: url-test
+  filter: 'US|美国'
+  proxies: []
+  url: http://cp.cloudflare.com/generate_204
+  interval: 1200
+- name: Proxy
+  type: select
+  proxies: ["US","DIRECT"]
+- name: Bing
+  type: select
+  proxies: ["US","DIRECT"]
+- name: GitHub
+  type: select
+  proxies: ["US","DIRECT"]
+- name: OpenAI
+  type: select
+  proxies: ["US","DIRECT"]
+- name: Apple国外
+  type: select
+  proxies:
+  - Proxy
+  - US
+  - DIRECT
+- name: Steam
+  type: select
+  proxies:
+  - Proxy
+  - US
+  - DIRECT
+- name: GoogleVoice
+  type: select
+  proxies:
+  - US
+- name: Netflix
+  type: select
+  proxies:
+  - Proxy
+  - US
+  - DIRECT
+- name: YouTube
+  type: select
+  proxies:
+  - Proxy
+  - US
+  - DIRECT
+- name: Final
+  type: select
+  proxies:
+  - Proxy
+  - US
+  - DIRECT
+
+
+rule-providers:
+  XJProxy:
+    type: http
+    path: ./rule-set/XJProxy.yaml
+    behavior: classical
+    url: https://izhangxm-surgio.oss-cn-beijing.aliyuncs.com/rule-provider/xj_proxy.yaml
+    interval: 60
+  GoogleVoice:
+    type: http
+    path: ./rule-set/GoogleVoice.yaml
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GoogleVoice/GoogleVoice.yaml
+    interval: 86400
+  AppleTV:
+    type: http
+    path: ./rule-set/AppleTV.yaml
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AppleTV/AppleTV.yaml
+    interval: 86400
+  AppleNews:
+    type: http
+    path: ./rule-set/AppleNews.yaml
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AppleNews/AppleNews.yaml
+    interval: 86400
+
+rules:
+- GEOIP,private,DIRECT,no-resolve
+- IP-CIDR,192.168.0.0/16,DIRECT
+- GEOSITE,category-ads-all,REJECT
+# 自定义的高优先级规则
+- PROCESS-NAME,microsocks,Proxy
+- RULE-SET,XJProxy,Proxy
+- DOMAIN-KEYWORD,bing,Bing
+- DOMAIN-KEYWORD,openai,OpenAI
+- DOMAIN-KEYWORD,paradox,Steam
+# 自定义分组
+- RULE-SET,GoogleVoice,GoogleVoice
+- RULE-SET,AppleTV,Apple国外
+- RULE-SET,AppleNews,Apple国外
+- GEOIP,netflix,Netflix
+- GEOSITE,github,GitHub
+- GEOSITE,youtube,YouTube
+# steam规则，注意国内流量必须在前面
+- GEOSITE,category-games@cn,DIRECT 
+- GEOSITE,Steam,Steam
+- GEOSITE,facebook,Proxy
+- GEOIP,telegram,Proxy
+- GEOIP,twitter,Proxy
+# 需要直连的流量
+- GEOSITE,google-cn,DIRECT
+- GEOSITE,icloud@cn,DIRECT
+- GEOSITE,apple@cn,DIRECT
+- GEOSITE,apple-cn,DIRECT
+- GEOSITE,microsoft@cn,DIRECT
+- GEOIP,cn,DIRECT
+- GEOSITE,geolocation-cn,DIRECT
+# 最终流量出口
+- MATCH,Final

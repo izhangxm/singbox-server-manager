@@ -11,8 +11,12 @@ from base64 import b64encode
 from secrets import token_bytes
 from copy import deepcopy
 import numpy as np
+from flask import Flask
+from flask import request
+from io import StringIO 
 yaml = ruamel.yaml.YAML()
 
+app = Flask(__name__)
 
 service_state_cmd = "systemctl status sing-box"
 service_restart_cmd = "systemctl restart sing-box"
@@ -43,6 +47,8 @@ def load_subscribe_tp(tp_type="clash"):
 
     if tp_type == "singbox":
         subscribe_tp = yaml.load(open(serverinfo['subscribe_singbox_tp'], 'r'))
+    elif tp_type == "clashmeta":
+        subscribe_tp = yaml.load(open(serverinfo['subscribe_clashmeta_tp'], 'r'))
     elif tp_type == "clash":
         subscribe_tp = yaml.load(open(serverinfo['subscribe_clash_tp'], 'r'))
     else:
@@ -103,148 +109,73 @@ def api_server_config():
     pass
 
 
+@app.route('/subscrib')
 def api_subscrib():
     # 返回用户的的订阅，需要检查用户名和密码，和客户端，clash_verge 支持吃v2的tls
-    username = "xiaohei"
-    password = "123456"
-
-    serverinfo = load_server_info()
-    users = serverinfo['users']
-    user_auth = users[username]['auth']
-
-    contry_code = serverinfo['contry']
-
-    server_url = serverinfo['server_url']
-
-    assert user_auth == password, "password mismatch"
-
-    config_file = serverinfo['dst_server_cfg']
-    server_config = load_server_config(config_json_path=config_file)
-
-    # 当前主要是singbox的tp订阅，先暂时写在这里
-    singbox_tp = load_subscribe_tp(tp_type="singbox")
-
-    # 有的客户端不支持高版本
-    # client_shadowtls_versions = [1, 2, 3]
-    client_shadowtls_versions = [1,2,3]
-
-    # 最终的出口结果，模板中的也要继承
-    outbounds_result = singbox_tp['outbounds']
+    resp_data = get_default_resp_data()
+    try:
     
-    all_outbound_tags = []
-
-    # 依靠tag来索引信息比较方便
-    inbound_info = {}
-    for inbound in server_config['inbounds']:
-        tag = inbound.get("tag", False)
-        if not tag:
-            continue
-        inbound_info[tag] = inbound
-
-    random_numbers = np.arange(2000)
-    np.random.shuffle(random_numbers)
-    random_numbers = list(random_numbers)
-
-    protocol_defult = serverinfo['outbounds']['protocol_defult']
-    
-    for inbound in server_config['inbounds']:
-        p_type = inbound['type']
-
-        # 看是否已经被处理过
-        tag = inbound.get("tag", False)
-        if tag and inbound_info[tag]['processed']:
-            continue
+        username = request.args.get("uname", None)
+        password = request.args.get("password", None)
+        client_type = request.args.get("client", None)
         
-        if p_type == "shadowtls":
-            # 这种类型的inbound不是真正的inbound 会有其他协议辅助才行，所以不会是直连
-            shadowtls_in = inbound
+        if not username or not password:
+            raise Exception("miss uname or password or client")
 
-            # 一定含有detour标签
-            detour_tag = shadowtls_in['detour']
+        serverinfo = load_server_info()
+        users = serverinfo['users']
+        
+        if not users.get(username):
+            raise Exception("user not found")
+        
+        user_auth = users[username]['auth']
+        assert user_auth == password, "password mismatch"
+        
+        
+        client_shadowtls_versions = [1]
+        # 有的客户端不支持高版本
+        
+        if client_type == 'singbox':
+            client_shadowtls_versions = [1,2,3]
+        elif client_type == 'clash':
+            client_shadowtls_versions = []
+        elif client_type == 'clashmeta':
+            client_shadowtls_versions = [2]
+        elif client_type == 'shadowrocket':
+            client_shadowtls_versions = [1]
+        
+        
+        config_file = serverinfo['dst_server_cfg']
+        server_config = load_server_config(config_json_path=config_file)
+        
+        
+        from tools import subscrib
+        
+        client_config = "error"
+        
+        if client_type == "singbox":
+            # 当前主要是singbox的tp订阅，先暂时写在这里
+            config_tp = load_subscribe_tp(tp_type="singbox")
+            singbox_config_json = subscrib.singbox(serverinfo=serverinfo,server_config=server_config, config_tp=config_tp, username=username, client_shadowtls_versions=client_shadowtls_versions)
+            client_config = singbox_config_json
+        
+        elif client_type == "clashmeta" or client_type == "shadowrocket":
+            config_tp = load_subscribe_tp(tp_type="clashmeta")
+            
+            is_shadowrocket = client_type == "shadowrocket"
+            clashmeta_config = subscrib.clashmeta(serverinfo=serverinfo,server_config=server_config, config_tp=config_tp, username=username, client_shadowtls_versions=client_shadowtls_versions, is_shadowrocket=is_shadowrocket)
+            out_ = StringIO()
+            yaml.dump(clashmeta_config,out_)
+            out_.seek(0)
+            client_config = out_.read()
+            
+        
+        return client_config
 
-            detour_bound = inbound_info[detour_tag]
-            inbound_info[detour_tag]['processed'] = True
-            
-            # 不论哪种协议，出口都是shadowtls
-            rand_num = random_numbers[0]
-            del random_numbers[0]
-            _out_tag = f"shadowtls{rand_num:04d}"
-            
-            s_version = shadowtls_in["version"]
-            
-            if s_version not in client_shadowtls_versions:
-                continue
-            
-            _tls_info = { 
-                        "type": "shadowtls",  
-                        "tag": _out_tag,
-                        "version":shadowtls_in["version"],
-                        "server": server_url,
-                        "server_port": shadowtls_in['listen_port'],
-                        "tls": { "enabled": True, "server_name": shadowtls_in['handshake']["server"] } 
-                        }
-            
-            if shadowtls_in['version'] == 2:
-                _tls_info['password'] = shadowtls_in["password"]
-            elif shadowtls_in['version'] == 3:
-                password = [x['password'] for x in shadowtls_in['users'] if x['name'] == username][0]
-                _tls_info['password'] = password
-                
-            outbounds_result.append(_tls_info)
-            
-            _ccc_out_tag = None
-            
-            # 处理shadowsocks类型的信息
-            if detour_bound['type'] == "shadowsocks":
-                _upass = [x['password'] for x in detour_bound['users'] if x['name'] == username][0]
-                
-                _ccc_out_tag = f"{contry_code}-ss-v{s_version}"
-                _ppp = deepcopy(protocol_defult['shadowsocks'])
-                _ppp.update({
-                    "type": "shadowsocks",
-                    "tag": _ccc_out_tag,
-                    "method": detour_bound['method'],
-                    "password": f"{detour_bound['password']}:{_upass}",
-                    "detour": _out_tag,
-                })
-                outbounds_result.append(_ppp)
-                
-            elif detour_bound['type'] == "http":
-                password = [ x['password'] for x in detour_bound['users'] if x['username'] == username][0]
-                _ccc_out_tag = f"{contry_code}-http-v{s_version}"
-                _ppp = deepcopy(protocol_defult['http'])
-                _ppp.update({
-                    "type": "http",
-                    "tag": _ccc_out_tag,
-                    "username": username,
-                    "password": password,
-                    "detour": _out_tag,
-                    })
-                outbounds_result.append(_ppp)
-            
-            # 处理完成
-            if _ccc_out_tag is None:
-                raise Exception("有类型未处理out-tag")
-            all_outbound_tags.append(_ccc_out_tag)
-            
-        else:
-            # TODO 非shadowtls的连接
-            pass
-    
-    # 生成final出站 selector tag为final
-    final_outbound =  {
-            "type": "selector",
-            "tag": "final",
-            "outbounds": all_outbound_tags + ['direct'],
-            "default": all_outbound_tags[0]
-            }
-    
-    outbounds_result.append(final_outbound)
-     # 整合完成，替换原本的配置
-    singbox_tp["outbounds"] = outbounds_result
-
-    # 先临时放这里来观察结果
-    json.dump(singbox_tp, open("runtime/client.json", 'w+'), sort_keys=False, indent=2, separators=(',', ':'))
+    except Exception as e:
+        resp_data['code'] = 0
+        resp_data['info'] = 'Failed: ' + str(e)
+    return resp_data
 
 
 def api_user_state():
@@ -261,6 +192,7 @@ def api_user_state():
     return resp_data
 
 
+@app.route('/update_server')
 def api_update_server():
     # 更新服务器参数
     resp_data = get_default_resp_data()
@@ -347,17 +279,20 @@ def api_update_server():
     return resp_data
 
 
-def app():
+
+def main():
     # 运行app
-    pass
+    app.run(host="0.0.0.0", port=8180,debug=True)
 
 
 if __name__ == "__main__":
     # get_service_state()
     # print(service_op("status"))
-    api_update_server()
-    api_subscrib()
+    # api_update_server()
+    # api_subscrib()
     # print(service_op("restart"))
 
     # a = get_random_password()
     # print(a)
+    
+    main()

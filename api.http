@@ -1,0 +1,17 @@
+
+
+@baseUrl = http://127.0.0.1:8180
+
+### 更新服务器配置
+GET {{baseUrl}}/update_server HTTP/1.1
+content-type: application/json
+
+
+### 获取订阅 
+@uname=xiaohei
+@password=123456
+@client=clashmeta
+GET {{baseUrl}}/subscrib?uname={{uname}}&password={{password}}&client={{client}}
+content-type: application/json
+
+
