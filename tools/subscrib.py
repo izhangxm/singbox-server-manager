@@ -122,9 +122,26 @@ def singbox(serverinfo, server_config,  config_tp, username,client_shadowtls_ver
                 raise Exception("有类型未处理out-tag")
             all_outbound_tags.append(_ccc_out_tag)
             
-        else:
-            # TODO 非shadowtls的连接
-            pass
+        elif p_type == "trojan":
+            _ccc_out_tag = f"{contry_code}-tron-ws"
+            password = [ x['password'] for x in inbound['users'] if x['name'] == username][0]
+            _ppp = {
+                "tag": _ccc_out_tag,
+                "server": server_url,
+                "port": inbound['listen_port'],
+                "password":password,
+                "type": "trojan",
+                "network": "ws",
+                "sni": server_url,
+                "udp": True,
+                "ws-opts":{
+                    "path": inbound['transport']['path']
+                }
+            }
+            
+            outbounds_result.append(_ppp)
+            # 处理完成
+            all_outbound_tags.append(_ccc_out_tag)
     
     # 生成final出站 selector tag为final
     final_outbound =  {
@@ -255,7 +272,7 @@ def clashmeta(serverinfo, server_config,  config_tp, username,client_shadowtls_v
             if _ccc_out_tag is not  None:
                 all_proxy_names.append(_ccc_out_tag)
         elif p_type == "trojan":
-            _ccc_out_tag = f"tron-ws"
+            _ccc_out_tag = f"{contry_code}-tron-ws"
             password = [ x['password'] for x in inbound['users'] if x['name'] == username][0]
             _ppp = {
                 "name": _ccc_out_tag,
