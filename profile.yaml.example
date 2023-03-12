@@ -137,6 +137,12 @@ inbounds:
 
 # 这里sinbox主要是客户端的一些配置
 outbounds:
+  multiplex:
+    enabled: true
+    protocol: smux
+    max_connections: 8
+    min_streams: 4
+  
   # 每种协议出站的一些默认设定
   protocol_defult:
     shadowsocks:
@@ -149,5 +155,4 @@ outbounds:
         min_streams: 4
     http:
       type: http
-
 
