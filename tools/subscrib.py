@@ -232,9 +232,11 @@ def clashmeta(serverinfo, server_config,  config_tp, username,client_shadowtls_v
                 _ppp = {}
                 _ppp.update({
                     "type": "http",
-                    "tag": _ccc_out_tag,
+                    "name": _ccc_out_tag,
                     "username": username,
                     "password": password,
+                    "server": server_url,
+                    "port": shadowtls_in['listen_port'],
                     "plugin": "shadow-tls",
                     "plugin-opts": {
                         "host": shadowtls_in['handshake']["server"],
