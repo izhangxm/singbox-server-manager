@@ -333,10 +333,13 @@ def print_request_info():
         
         rpc = server_info['rpc_key']
         
-        auth = request.headers.get('rpc_key', None)
+        auth = request.headers.get('rpckey', None)
+        
+        if auth is None:
+            return "rpckey header is none"
         
         if rpc != auth:
-            return  "rpc auth error(auth header)"
+            return  "rpc key error"
 
 def main():
     # 运行app
