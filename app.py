@@ -31,7 +31,19 @@ class ServiceState():
     active = "active"
     failed = "faild"
 
-
+def xj_update_dict(base:dict, update:dict):
+    # 仅支持两级更新
+    for k,v in update.items():
+        if k in base.keys():
+            b_v = base[k]
+            if isinstance(b_v, dict) and isinstance(v, dict):
+                b_v.update(v)
+            else:
+                b_v = v
+            base[k] = b_v
+        else:
+            base[k] = v
+    
 def load_server_info():
     # server_info = json.load(open(args.server_info, 'r'))
     server_info = yaml.load(open(server_info_file, 'r'))
@@ -248,6 +260,8 @@ def api_update_server():
 
         shadowtls_cfg = server_info['inbounds']['shadowtls']
         listen_common = server_info['inbounds']['listen']
+        tls_common = server_info['inbounds']['tls']
+        trans_common = server_info['inbounds']['transport']
 
         shadowtls_tp = shadowtls_cfg['common']
         shadowtls_tp.update(listen_common)
@@ -304,9 +318,29 @@ def api_update_server():
                 else:
                     # TODO
                     pass
-
                 inbounds_res += [content]
-
+            else:
+                # 不通过tls的协议
+                content = {"tag": tag}
+                content['listen'] = listen_common
+                content['tls'] = tls_common
+                content['transport'] = trans_common
+                xj_update_dict(content, interface['content'])
+                # 是否支持多用户
+                if meta['support_multiuser']:
+                    uname_key = meta.get("uname_key")
+                    users = deepcopy(users_dt)
+                    if uname_key:
+                        for user in users:
+                            _uname = user.pop('name')
+                            user[uname_key] = _uname
+                    content.update({"users": users})
+                else:
+                    # TODO
+                    pass
+                inbounds_res += [content]
+                
+            
         server_cfg_res['inbounds'] = inbounds_res
         dump_server_config(server_cfg_res, server_info["dst_server_cfg"])
 
@@ -349,3 +383,4 @@ def main():
 if __name__ == "__main__":
     
     main()
+    # api_update_server()

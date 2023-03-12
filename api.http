@@ -1,24 +1,16 @@
 
 ### 更新服务器
-@baseUrl = https://banw01.duorenhezugia.top:1443/singbox
+@baseUrl = http://127.0.0.1:8180
+# http://127.0.0.1:8180
+# https://banw01.duorenhezugia.top:1443/singbox
 @rpckey= 123456
 
-
-### 更新服务器配置
-GET {{baseUrl}}/update_server HTTP/1.1
-content-type: application/json
-rpckey: {{rpckey}}
 
 ### 获取服务器日志
 GET {{baseUrl}}/serverlog
 content-type: application/json
 rpckey: {{rpckey}}
 
-
-### 重启服务器
-GET {{baseUrl}}/serverop/restart
-content-type: application/json
-rpckey: {{rpckey}}
 
 
 ### 获得服务器在用的配置
@@ -28,11 +20,21 @@ rpckey: {{rpckey}}
 heas: dad
 
 
+### 更新服务器配置
+GET {{baseUrl}}/update_server HTTP/1.1
+content-type: application/json
+rpckey: {{rpckey}}
+
+
+### 重启服务器
+GET {{baseUrl}}/serverop/restart
+content-type: application/json
+rpckey: {{rpckey}}
 
 ### 获取订阅 
 @uname=xiaohei
 @password=123456
-@client=singbox
+@client=clashmeta
 #shadowrocket, clash, clashmeta, singbox
 
 GET {{baseUrl}}/subscrib?uname={{uname}}&password={{password}}&client={{client}}

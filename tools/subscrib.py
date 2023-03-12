@@ -158,6 +158,7 @@ def clashmeta(serverinfo, server_config,  config_tp, username,client_shadowtls_v
         tag = inbound.get("tag", False)
         if not tag:
             continue
+        inbound['processed'] = False
         inbound_info[tag] = inbound
 
     random_numbers = np.arange(2000)
@@ -202,7 +203,7 @@ def clashmeta(serverinfo, server_config,  config_tp, username,client_shadowtls_v
                 _upass = [x['password'] for x in detour_bound['users'] if x['name'] == username][0]
                 _ccc_out_tag = f"{contry_code}-ss-v{s_version}"
                 
-                a = { "type": "ss",
+                _ppp = { "type": "ss",
                     "cipher": detour_bound['method'],
                     "name": _ccc_out_tag,
                     "password": f"{detour_bound['password']}:{_upass}",
@@ -217,26 +218,60 @@ def clashmeta(serverinfo, server_config,  config_tp, username,client_shadowtls_v
                 }
                 
                 if is_shadowrocket:
-                    a.pop("plugin-opts")
-                    a['pluginParam'] = {
+                    _ppp.pop("plugin-opts")
+                    _ppp['pluginParam'] = {
                         "version" : s_version,
                         "host" : shadowtls_in['handshake']["server"]
                     }
                 
-                proxy_result.append(a)
+                proxy_result.append(_ppp)
                 
             elif detour_bound['type'] == "http":
-               pass
+                password = [ x['password'] for x in detour_bound['users'] if x['username'] == username][0]
+                _ccc_out_tag = f"{contry_code}-http-v{s_version}"
+                _ppp = {}
+                _ppp.update({
+                    "type": "http",
+                    "tag": _ccc_out_tag,
+                    "username": username,
+                    "password": password,
+                    "plugin": "shadow-tls",
+                    "plugin-opts": {
+                        "host": shadowtls_in['handshake']["server"],
+                        "password": tls_password
+                        }
+                    })
+                if is_shadowrocket:
+                    _ppp.pop("plugin-opts")
+                    _ppp['pluginParam'] = {
+                        "version" : s_version,
+                        "host" : shadowtls_in['handshake']["server"]
+                    }
+                proxy_result.append(_ppp)
             
             # 处理完成
-            if _ccc_out_tag is None:
-                raise Exception("有类型未处理out-tag")
+            if _ccc_out_tag is not  None:
+                all_proxy_names.append(_ccc_out_tag)
+        elif p_type == "trojan":
+            _ccc_out_tag = f"tron-ws"
+            password = [ x['password'] for x in inbound['users'] if x['name'] == username][0]
+            _ppp = {
+                "name": _ccc_out_tag,
+                "server": server_url,
+                "port": inbound['listen_port'],
+                "password":password,
+                "type": "trojan",
+                "network": "ws",
+                "sni": server_url,
+                "udp": True,
+                "ws-opts":{
+                    "path": inbound['transport']['path']
+                }
+            }
+            
+            proxy_result.append(_ppp)
+            # 处理完成
             all_proxy_names.append(_ccc_out_tag)
-        else:
-            # TODO 非shadowtls的连接
-            pass
-    
-    
     
     
     config_tp['proxies'] = proxy_result
