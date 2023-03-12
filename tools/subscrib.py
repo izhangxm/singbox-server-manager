@@ -34,6 +34,7 @@ def singbox(serverinfo, server_config,  config_tp, username,client_shadowtls_ver
         tag = inbound.get("tag", False)
         if not tag:
             continue
+        inbound['processed'] = False
         inbound_info[tag] = inbound
 
     random_numbers = np.arange(2000)
@@ -128,16 +129,21 @@ def singbox(serverinfo, server_config,  config_tp, username,client_shadowtls_ver
             _ppp = {
                 "tag": _ccc_out_tag,
                 "server": server_url,
-                "port": inbound['listen_port'],
+                "server_port": inbound['listen_port'],
                 "password":password,
                 "type": "trojan",
-                "network": "ws",
-                "sni": server_url,
-                "udp": True,
-                "ws-opts":{
-                    "path": inbound['transport']['path']
-                }
+                "network": "tcp",
+                "tls":{
+                    "disable_sni": False,
+                    "insecure": False,
+                    "alpn": inbound['tls']['alpn'],
+                    "min_version": inbound['tls']['min_version'],
+                    "max_version": inbound['tls']['max_version'],
+                    "cipher_suites": inbound['tls']['cipher_suites']
+                },
+                "transport":inbound['transport']
             }
+            _ppp['multiplex'] = serverinfo['outbounds']['multiplex']
             
             outbounds_result.append(_ppp)
             # 处理完成
