@@ -24,7 +24,7 @@ service_stop_cmd = "systemctl stop sing-box"
 
 
 server_info_file = "./profile.yaml"
-
+server_info = None
 
 class ServiceState():
     inactive = "inactive"
@@ -98,16 +98,53 @@ def get_default_resp_data():
     return {"code": 1, "info": "ok"}
 
 
+@app.route('/serverop/<op>')
+def api_service_op(op):
+    resp_data = get_default_resp_data()
+    try:
+        res = service_op(op)    
+        resp_data['data'] = res
+    except Exception as e:
+        resp_data['code'] = 0
+        resp_data['info'] = 'Failed: ' + str(e)
+    return resp_data
+
+@app.route('/serverlog')
 def api_server_log():
     # parame: last_rows  default 300
     # 应该要实时返回用户的日志, 默认返回最新的300条数据
-    pass
+    resp_data = get_default_resp_data()
+    try:
+        serverinfo = load_server_info()
+        log_path = serverinfo['log']['output']
+        with open(log_path, 'r') as f:
+            lines = f.readlines()
+        
+        last = min(len(lines), 300)
+        out_str = "\n".join(lines[-last:])
+        
+        return out_str
+    
+    except Exception as e:
+        resp_data['code'] = 0
+        resp_data['info'] = 'Failed: ' + str(e)
+    return resp_data
 
-
+@app.route('/serverconfig')
 def api_server_config():
     # API接口 返回本服务器的相关配置的一些信息，需要验证统一的key
-    pass
+    resp_data = get_default_resp_data()
+    try:
+        serverinfo = load_server_info()
+        config_json = load_server_config(config_json_path=serverinfo['dst_server_cfg'])
+        return config_json
+    except Exception as e:
+        resp_data['code'] = 0
+        resp_data['info'] = 'Failed: ' + str(e)
+    return resp_data
 
+    
+    
 
 @app.route('/subscrib')
 def api_subscrib():
@@ -175,9 +212,10 @@ def api_subscrib():
     except Exception as e:
         resp_data['code'] = 0
         resp_data['info'] = 'Failed: ' + str(e)
+        raise e
     return resp_data
 
-
+@app.route("/serverstate")
 def api_user_state():
     # TODO 查看服务状态和用户状态，流量等
     resp_data = get_default_resp_data()
@@ -278,7 +316,27 @@ def api_update_server():
         raise e
     return resp_data
 
+@app.before_request
+def print_request_info():
+    white_list = ["/subscrib"]
+    print("请求地址：" + str(request.path))
+    print("请求方法：" + str(request.method))
+    print("---请求headers--start--")
+    print(str(request.headers).rstrip())
+    print("---请求headers--end----")
+    print("GET参数:" + str(request.args))
+    print("POST参数: " + str(request.form))
 
+    if str(request.path) not in white_list:
+        # 验证头部auth
+        server_info = load_server_info()
+        
+        rpc = server_info['rpc_key']
+        
+        auth = request.headers.get('rpc_key', None)
+        
+        if rpc != auth:
+            return  "rpc auth error(auth header)"
 
 def main():
     # 运行app
@@ -286,13 +344,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # get_service_state()
-    # print(service_op("status"))
-    # api_update_server()
-    # api_subscrib()
-    # print(service_op("restart"))
-
-    # a = get_random_password()
-    # print(a)
     
     main()

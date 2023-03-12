@@ -1,16 +1,39 @@
 
-
+### 更新服务器
 @baseUrl = http://127.0.0.1:8180
+@rpc_key= kdoldoakdoe
+
 
 ### 更新服务器配置
 GET {{baseUrl}}/update_server HTTP/1.1
 content-type: application/json
+rpc_key: {{rpc_key}}
+
+### 获取服务器日志
+GET {{baseUrl}}/serverlog
+content-type: application/json
+rpc_key: {{rpc_key}}
+
+
+### 重启服务器
+GET {{baseUrl}}/serverop/restart
+content-type: application/json
+rpc_key: {{rpc_key}}
+
+
+### 获得服务器在用的配置
+GET {{baseUrl}}/serverconfig
+content-type: application/json
+rpc_key: {{rpc_key}}
+
 
 
 ### 获取订阅 
 @uname=xiaohei
 @password=123456
-@client=clashmeta
+@client=singbox
+#shadowrocket, clash, clashmeta, singbox
+
 GET {{baseUrl}}/subscrib?uname={{uname}}&password={{password}}&client={{client}}
 content-type: application/json
 

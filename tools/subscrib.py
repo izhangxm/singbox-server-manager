@@ -17,14 +17,9 @@ from flask import request
 
 def singbox(serverinfo, server_config,  config_tp, username,client_shadowtls_versions=[1,2,3]):
 
-    users = serverinfo['users']
-    user_auth = users[username]['auth']
-
     contry_code = serverinfo['contry']
 
     server_url = serverinfo['server_url']
-
-    assert user_auth == password, "password mismatch"
 
     singbox_tp = config_tp
 
