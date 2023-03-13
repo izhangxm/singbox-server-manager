@@ -158,7 +158,7 @@ proxies: []
 
 proxy-groups:
 - name: US
-  type: url-test
+  type: select
   filter: 'US|美国'
   proxies: []
   url: http://cp.cloudflare.com/generate_204

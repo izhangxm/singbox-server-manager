@@ -31,6 +31,19 @@ GET {{baseUrl}}/serverop/restart
 content-type: application/json
 rpckey: {{rpckey}}
 
+
+### 停止服务器
+GET {{baseUrl}}/serverop/stop
+content-type: application/json
+rpckey: {{rpckey}}
+
+### 启动服务器
+GET {{baseUrl}}/serverop/start
+content-type: application/json
+rpckey: {{rpckey}}
+
+
+
 ### 获取订阅 
 @uname=xiaohei
 @password=123456

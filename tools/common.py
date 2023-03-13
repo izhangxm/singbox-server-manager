@@ -98,6 +98,7 @@ def get_random_password():
 def service_op(op="status"):
     # 操作服务状态，并返回操作完成后的结果
     cmd = f"systemctl {op} sing-box"
+    print(cmd)
     p = subprocess.Popen(cmd, shell=True,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
