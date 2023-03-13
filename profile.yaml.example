@@ -67,7 +67,7 @@ inbounds:
     common:
       type: shadowtls
       handshake:
-        server: captive.apple.com
+        server: m.media-amazon.com
         server_port: 443
     # v2的特殊扩展
     v2:
