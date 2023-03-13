@@ -56,7 +56,7 @@ dns:
 log:
   disabled: false
   level: debug
-  output: /tmp/sing-box.log
+  # output: /tmp/sing-box.log
   timestamp: true
 
 # 入站相关配置
@@ -105,7 +105,7 @@ inbounds:
       meta: # 
         # only_tls:只生成通过stls的服务 only_me:仅生成自身的服务 all: 全部
         shadowtls_mode: all
-        tls_s_port: 4443 # 如果overshadowtls为true，这一项必填
+        tls_s_port: 8443 # 如果overshadowtls为true，这一项必填
         support_multiuser: true # 是否支持多用户模式
         server_s_port: 0 # 如果不支持，此项必填，需要为每个用户开一个服务端口，注意不能与其他地方冲突
         uname_key: name
@@ -116,22 +116,22 @@ inbounds:
         listen_port: 20231
         method: 2022-blake3-aes-128-gcm
         password: eeHTjVJuVBjFbtx7tvIQIA==
-    http-in:
-      meta:
-        shadowtls_mode: only_tls
-        tls_s_port: 5443
-        support_multiuser: true
-        server_s_port: 0
-        uname_key: username
-        use_tls: false
-        use_transport: false
-      content:
-        type: http
-        listen_port: 20232
+    # http-in:
+    #   meta:
+    #     shadowtls_mode: only_tls
+    #     tls_s_port: 8453
+    #     support_multiuser: true
+    #     server_s_port: 0
+    #     uname_key: username
+    #     use_tls: false
+    #     use_transport: false
+    #   content:
+    #     type: http
+    #     listen_port: 20232
     trojan-in:
       meta: # 
         shadowtls_mode: all
-        tls_s_port: 6443 # 如果overshadowtls为true，这一项必填
+        tls_s_port: 8463 # 如果overshadowtls为true，这一项必填
         support_multiuser: true # 是否支持多用户模式
         server_s_port: 0 # 如果不支持，此项必填，需要为每个用户开一个服务端口，注意不能与其他地方冲突
         uname_key: name

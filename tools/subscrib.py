@@ -47,7 +47,7 @@ def process_inbounds(server_url, protocol_defult, inbound, username, detour_boun
         _ppp = {}
         if client == ClientApp.singbox:
             _ppp['multiplex'] = protocol_defult['multiplex']
-            tools.xj_update_dict(_ppp,protocol_defult.get("http", {}))
+            tools.xj_update_dict(_ppp,protocol_defult.get("shadowsocks", {}))
             tools.xj_update_dict(_ppp, {
                 "type": "shadowsocks",
                 "tag": _ccc_out_name,
@@ -100,7 +100,7 @@ def process_inbounds(server_url, protocol_defult, inbound, username, detour_boun
         _ppp = {}
         if client == 'singbox':
             _ppp['multiplex'] = protocol_defult['multiplex']
-            tools.xj_update_dict(_ppp,protocol_defult.get("http", {}))
+            tools.xj_update_dict(_ppp,protocol_defult.get("trojan", {}))
             tools.xj_update_dict(_ppp, {
             "tag": _ccc_out_name,
             "password":password,
@@ -120,7 +120,7 @@ def process_inbounds(server_url, protocol_defult, inbound, username, detour_boun
 
         # 处理clashmeta，和小火箭
         elif client in ['clashmeta','shadowrocket']:
-            tools.xj_update_dict(_ppp,protocol_defult.get("http", {}))
+            tools.xj_update_dict(_ppp,protocol_defult.get("trojan", {}))
             tools.xj_update_dict(_ppp,  {
                 "name": _ccc_out_name,
                 "server": server_url,
@@ -195,7 +195,7 @@ def singbox(server_profile, server_config,  config_tp, username, client_type="si
 
     server_url = server_profile['server_url']
 
-    client_shadowtls_versions = [1,2,3]
+    client_shadowtls_versions = [2,3]
     
     
     # 最终的出口结果，模板中的也要继承

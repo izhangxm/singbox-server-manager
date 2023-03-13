@@ -85,12 +85,11 @@ def update(server_profile):
             res_content['tls'] = tls_common
         if meta['use_transport']:  
             res_content['transport'] = trans_common
-        
+        common.xj_update_dict(res_content, interface['content'])
         if meta['shadowtls_mode'] == 'only_tls':
             # 如果仅通过tls服务，则禁用外网监听
             res_content['listen'] = "127.0.0.1"
-            
-        common.xj_update_dict(res_content, interface['content'])
+            # del res_content['listen_port']
         
         # 是否支持多用户
         if meta['support_multiuser']:
