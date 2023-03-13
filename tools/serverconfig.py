@@ -1,6 +1,6 @@
 from copy import deepcopy
-from flask import request
 from tools import common
+import numpy as np
 
 
 def update(server_profile):
@@ -30,6 +30,12 @@ def update(server_profile):
     # log 相关
     server_cfg_res['log'] = server_profile['log']
 
+    
+    random_numbers = np.arange(2000)
+    np.random.shuffle(random_numbers)
+    random_numbers = list(random_numbers)
+    
+    
     # 生成配置文件的inbounds
     inbounds_res = []
     interfaces = server_profile['inbounds']['interfaces']
@@ -37,65 +43,69 @@ def update(server_profile):
 
         # 当前监听服务的描述信息
         meta = interface["meta"]
-
-        # 是否通过shadowtls来通信
-        if meta['over_shadowtls']:
+        p_content = interface["content"]
+        
+        rand_num = random_numbers[0]
+        del random_numbers[0]
+        
+        
+        tag_suffix = p_content['listen_port'] if "listen_port" in p_content.keys() else f"{rand_num:04d}"
+        new_tag = f"{tag}-{tag_suffix}"
+        
+        # 生成shadowtls来通信
+        if meta['shadowtls_mode'] in ['all', 'only_tls']:
+            
             s_p = meta['tls_s_port']
+            
             # 为保证兼容性 生成三个版本的配置
             # v1-v3的tls配置
             v1_shadow_tls = deepcopy(shadowtls_tp)
+            listen_port = s_p
             v1_shadow_tls.update(
-                {"listen_port": s_p, "version": 1, "detour": tag})
-
+                {"tag":f"shadowtls-{listen_port}","listen_port": listen_port, "version": 1, "detour": new_tag})
+            
             v2_shadow_tls = deepcopy(shadowtls_tp)
+            listen_port += 1
             v2_shadow_tls.update(
-                {"listen_port": s_p+1, "version": 2, "detour": tag})
+                {"tag":f"shadowtls-{listen_port}","listen_port": listen_port, "version": 2, "detour": new_tag})
             v2_shadow_tls.update(v2_tp)
 
             v3_shadow_tls = deepcopy(shadowtls_tp)
+            listen_port += 1
             v3_shadow_tls.update(
-                {"listen_port": s_p+2, "version": 3, "detour": tag, "users": users_dt})
+                {"tag":f"shadowtls-{listen_port}","listen_port": listen_port, "version": 3, "detour": new_tag, "users": users_dt})
 
             inbounds_res += [v1_shadow_tls, v2_shadow_tls, v3_shadow_tls]
-
-            # 加密类型配置
-            content = interface['content']
-            content.update(listen_common)
-            content.update({"listen": "127.0.0.1", "tag": tag})
-
-            # 是否支持多用户
-            if meta['support_multiuser']:
-                uname_key = meta.get("uname_key")
-                users = deepcopy(users_dt)
-                if uname_key:
-                    for user in users:
-                        _uname = user.pop('name')
-                        user[uname_key] = _uname
-                content.update({"users": users})
-            else:
-                # TODO
-                pass
-            inbounds_res += [content]
+        
+        # 构建监听入口
+        res_content = {"tag": new_tag}
+        common.xj_update_dict(res_content, listen_common)
+        
+        if meta['use_tls']:
+            res_content['tls'] = tls_common
+        if meta['use_transport']:  
+            res_content['transport'] = trans_common
+        
+        if meta['shadowtls_mode'] == 'only_tls':
+            # 如果仅通过tls服务，则禁用外网监听
+            res_content['listen'] = "127.0.0.1"
+            
+        common.xj_update_dict(res_content, interface['content'])
+        
+        # 是否支持多用户
+        if meta['support_multiuser']:
+            uname_key = meta.get("uname_key")
+            users = deepcopy(users_dt)
+            if uname_key:
+                for user in users:
+                    _uname = user.pop('name')
+                    user[uname_key] = _uname
+            res_content.update({"users": users})
         else:
-            # 不通过tls的协议
-            content = {"tag": tag}
-            content['listen'] = listen_common
-            content['tls'] = tls_common
-            content['transport'] = trans_common
-            common.xj_update_dict(content, interface['content'])
-            # 是否支持多用户
-            if meta['support_multiuser']:
-                uname_key = meta.get("uname_key")
-                users = deepcopy(users_dt)
-                if uname_key:
-                    for user in users:
-                        _uname = user.pop('name')
-                        user[uname_key] = _uname
-                content.update({"users": users})
-            else:
-                # TODO
-                pass
-            inbounds_res += [content]
+            # TODO 不支持多用户的情况下处理
+            pass
+        
+        inbounds_res += [res_content]
     
     server_cfg_res['inbounds'] = inbounds_res
     

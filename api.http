@@ -1,7 +1,7 @@
 
 ### 更新服务器
-@baseUrl = http://127.0.0.1:8180
-# @baseUrl = https://banw01.duorenhezugia.top:1443/singbox
+# @baseUrl = http://127.0.0.1:8180
+@baseUrl = https://banw01.duorenhezugia.top:1443/singbox
 # http://127.0.0.1:8180
 # https://banw01.duorenhezugia.top:1443/singbox
 @rpckey= 123456
@@ -34,7 +34,7 @@ rpckey: {{rpckey}}
 ### 获取订阅 
 @uname=xiaohei
 @password=123456
-@client=clashmeta
+@client=singbox
 #shadowrocket, clash, clashmeta, singbox
 
 GET {{baseUrl}}/subscrib?uname={{uname}}&password={{password}}&client={{client}}

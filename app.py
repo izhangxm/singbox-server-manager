@@ -16,6 +16,8 @@ from flask import request
 from io import StringIO 
 from tools.common import yaml
 import tools
+from tools.common import ClientApp
+
 
 app = Flask(__name__)
 
@@ -88,20 +90,6 @@ def api_subscrib():
         user_auth = users[username]['auth']
         assert user_auth == password, "password mismatch"
         
-        
-        client_shadowtls_versions = [1]
-        # 有的客户端不支持高版本
-        
-        if client_type == 'singbox':
-            client_shadowtls_versions = [1,2,3]
-        elif client_type == 'clash':
-            client_shadowtls_versions = []
-        elif client_type == 'clashmeta':
-            client_shadowtls_versions = [2]
-        elif client_type == 'shadowrocket':
-            client_shadowtls_versions = [1]
-        
-        
         config_file = server_profile['dst_server_cfg']
         server_config = tools.load_server_config(config_json_path=config_file)
         
@@ -110,22 +98,19 @@ def api_subscrib():
         
         client_config = "error"
         
-        if client_type == "singbox":
+        if client_type == ClientApp.singbox:
             # 当前主要是singbox的tp订阅，先暂时写在这里
-            config_tp = tools.load_subscribe_tp(tp_type="singbox")
-            singbox_config_json = subscrib.singbox(server_profile=server_profile,server_config=server_config, config_tp=config_tp, username=username, client_shadowtls_versions=client_shadowtls_versions)
+            config_tp = tools.load_subscribe_tp(tp_type=ClientApp.singbox)
+            singbox_config_json = subscrib.singbox(server_profile=server_profile,server_config=server_config, config_tp=config_tp, username=username, client_type=client_type)
             client_config = singbox_config_json
         
-        elif client_type == "clashmeta" or client_type == "shadowrocket":
-            config_tp = tools.load_subscribe_tp(tp_type="clashmeta")
-            
-            is_shadowrocket = client_type == "shadowrocket"
-            clashmeta_config = subscrib.clashmeta(server_profile=server_profile,server_config=server_config, config_tp=config_tp, username=username, client_shadowtls_versions=client_shadowtls_versions, is_shadowrocket=is_shadowrocket)
+        elif client_type in [ClientApp.clashmeta, ClientApp.shadowrocket]:
+            config_tp = tools.load_subscribe_tp(tp_type=ClientApp.clashmeta)
+            clashmeta_config = subscrib.clashmeta(server_profile=server_profile,server_config=server_config, config_tp=config_tp, username=username,  client_type=client_type)
             out_ = StringIO()
             yaml.dump(clashmeta_config,out_)
             out_.seek(0)
             client_config = out_.read()
-            
         
         return client_config
 
@@ -155,8 +140,8 @@ def api_update_server():
     # 更新服务器参数
     resp_data = tools.get_default_resp_data()
     try:
-        pass
-        
+        server_profile=tools.load_server_profile()
+        tools.serverconfig.update(server_profile=server_profile)
         
     except Exception as e:
         resp_data['code'] = 0
@@ -191,7 +176,7 @@ def print_request_info():
 
 def main():
     # 运行app
-    app.run(host="0.0.0.0", port=8180,debug=True)
+    app.run(host="0.0.0.0", port=8180,debug=False)
 
 
 if __name__ == "__main__":

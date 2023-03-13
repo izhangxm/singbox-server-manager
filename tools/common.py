@@ -13,6 +13,19 @@ service_state_cmd = "systemctl status sing-box"
 service_restart_cmd = "systemctl restart sing-box"
 service_stop_cmd = "systemctl stop sing-box"
 
+class ClientApp():
+    clash = "clash"
+    stash = "stash"
+    clashmeta = "clashmeta"
+    shadowrocket = "shadowrocket"
+    singbox = "singbox"
+
+class ProxyProtocol():
+    shadowsocks = "shadowsocks"
+    http = "http"
+    shadowtls= "shadowtls"
+    trojan = "trojan"
+
 
 class ServiceState():
     inactive = "inactive"
@@ -42,14 +55,14 @@ def load_server_config(config_json_path):
     return json.load(open(config_json_path, 'r'))
 
 
-def load_subscribe_tp(tp_type="clash"):
+def load_subscribe_tp(tp_type=ClientApp.clashmeta):
     server_profile = load_server_profile()
 
-    if tp_type == "singbox":
+    if tp_type == ClientApp.singbox:
         subscribe_tp = yaml.load(open(server_profile['subscribe_singbox_tp'], 'r'))
-    elif tp_type == "clashmeta":
+    elif tp_type == ClientApp.clashmeta:
         subscribe_tp = yaml.load(open(server_profile['subscribe_clashmeta_tp'], 'r'))
-    elif tp_type == "clash":
+    elif tp_type == ClientApp.clash:
         subscribe_tp = yaml.load(open(server_profile['subscribe_clash_tp'], 'r'))
     else:
         raise Exception("未知的订阅模板类型")
