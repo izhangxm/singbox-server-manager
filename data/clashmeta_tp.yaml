@@ -35,8 +35,9 @@ geodata-mode: true         #【Meta专属】使用geoip.dat数据库(默认：fa
 tcp-concurrent: true         #【Meta专属】TCP连接并发，如果域名解析结果对应多个IP
 
 
+# tun模式还需要在调整，目前工作不是很好
 tun:
-  enable: true
+  enable: false
   stack: gvisor # system or gvisor
   dns-hijack:
     - any:53

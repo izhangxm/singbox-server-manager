@@ -34,7 +34,7 @@ rpckey: {{rpckey}}
 ### 获取订阅 
 @uname=xiaohei
 @password=123456
-@client=singbox
+@client=clashmeta
 #shadowrocket, clash, clashmeta, singbox
 
 GET {{baseUrl}}/subscrib?uname={{uname}}&password={{password}}&client={{client}}

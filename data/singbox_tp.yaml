@@ -34,19 +34,20 @@ experimental:
   #     outbounds: []
   #     users: []
 inbounds:
-  - type: tun
-    stack: system
-    tag: tun-in
-    inet4_address: 172.19.0.1/30
-    # inet6_address: fdfe:dcba:9876::1/126
-    auto_route: true
-    sniff: true
+  ## tun模式目前工作不是很好 先用系统代理模式吧
+  # - type: tun
+  #   stack: system
+  #   tag: tun-in
+  #   inet4_address: 172.19.0.1/30
+  #   # inet6_address: fdfe:dcba:9876::1/126
+  #   auto_route: true
+  #   sniff: true
   - type: mixed
     tag: mixed-in
     listen: 127.0.0.1
     listen_port: 1081
     sniff: true
-    set_system_proxy: false
+    set_system_proxy: true
 outbounds:
   - type: direct
     tag: direct

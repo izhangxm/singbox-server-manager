@@ -1,25 +1,14 @@
-import flask
-import requests
-from argparse import Namespace
-import json
-import subprocess
-import time
-from pathlib import Path
-import ruamel.yaml
-import os
 from base64 import b64encode
 from secrets import token_bytes
 from copy import deepcopy
 import numpy as np
-from flask import Flask
-from flask import request
 
 
-def singbox(serverinfo, server_config,  config_tp, username,client_shadowtls_versions=[1,2,3]):
+def singbox(server_profile, server_config,  config_tp, username,client_shadowtls_versions=[1,2,3]):
 
-    contry_code = serverinfo['contry']
+    contry_code = server_profile['contry']
 
-    server_url = serverinfo['server_url']
+    server_url = server_profile['server_url']
 
     singbox_tp = config_tp
 
@@ -41,7 +30,7 @@ def singbox(serverinfo, server_config,  config_tp, username,client_shadowtls_ver
     np.random.shuffle(random_numbers)
     random_numbers = list(random_numbers)
 
-    protocol_defult = serverinfo['outbounds']['protocol_defult']
+    protocol_defult = server_profile['outbounds']['protocol_defult']
     
     for inbound in server_config['inbounds']:
         p_type = inbound['type']
@@ -143,7 +132,7 @@ def singbox(serverinfo, server_config,  config_tp, username,client_shadowtls_ver
                 },
                 "transport":inbound['transport']
             }
-            _ppp['multiplex'] = serverinfo['outbounds']['multiplex']
+            _ppp['multiplex'] = server_profile['outbounds']['multiplex']
             
             outbounds_result.append(_ppp)
             # 处理完成
@@ -164,12 +153,10 @@ def singbox(serverinfo, server_config,  config_tp, username,client_shadowtls_ver
     return singbox_tp
     
 
-def clashmeta(serverinfo, server_config,  config_tp, username,client_shadowtls_versions=[2], is_shadowrocket = False):
+def clashmeta(server_profile, server_config,  config_tp, username,client_shadowtls_versions=[2], is_shadowrocket = False):
 
-
-    contry_code = serverinfo['contry']
-
-    server_url = serverinfo['server_url']
+    contry_code = server_profile['contry']
+    server_url = server_profile['server_url']
 
     # 最终的出口结果，模板中的也要继承
     proxy_result = config_tp['proxies']
@@ -188,7 +175,7 @@ def clashmeta(serverinfo, server_config,  config_tp, username,client_shadowtls_v
     np.random.shuffle(random_numbers)
     random_numbers = list(random_numbers)
 
-    protocol_defult = serverinfo['outbounds']['protocol_defult']
+    protocol_defult = server_profile['outbounds']['protocol_defult']
     
     for inbound in server_config['inbounds']:
         p_type = inbound['type']
