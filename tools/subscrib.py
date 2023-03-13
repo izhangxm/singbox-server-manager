@@ -150,12 +150,17 @@ def process_inbounds(server_url, protocol_defult, inbound, username, detour_boun
                     "password": tls_password
                 }
             })
-            if client is ClientApp.shadowrocket:
+            if client == ClientApp.shadowrocket:
                 _ppp.pop("plugin-opts")
+                
                 _ppp['pluginParam'] = {
-                    "version" : detour_bound['version'],
+                    "version" : str(detour_bound['version']),
                     "host" : detour_bound['handshake']["server"]
                 }
+                if detour_bound['version'] == 2:
+                     _ppp['pluginParam']['password'] = tls_password
+                
+                
     elif client == ClientApp.singbox:
         if detour_key is None:
             _ppp.update({
