@@ -91,7 +91,6 @@ dns:
   # 仅填写 DNS 服务器的 IP 地址, 解析非IP的dns用的dns服务器,只支持纯IP
   default-nameserver:          
   - 114.114.114.114
-  - 8.8.8.8
 
   # 支持 UDP / TCP / DoT / DoH 协议的 DNS 服务，可以指明具体的连接端口号。
   # 所有 DNS 请求将会直接发送到服务器，不经过任何代理。
@@ -99,11 +98,11 @@ dns:
   nameserver:
   # 不建议配置超过 2 个 DNS 服务器，会增加系统功耗 默认DNS服务器，支持udp/tcp/dot/doh/doq
   - 223.5.5.5
-  - 202.204.48.8
+  - 223.6.6.6
   
   fallback:                          #回落DNS服务器，支持udp/tcp/dot/doh/doq
   - 180.76.76.76
-  - https://dns.cloudflare.com/dns-query
+  - 223.5.5.5
   
   fallback-filter:                   #回落DNS服务器过滤
     geoip: true                      #为真时，不匹配为geoip规则的使用fallback返回结果
@@ -113,7 +112,7 @@ dns:
  
   nameserver-policy:
     "geosite:cn":
-      - 223.6.6.6
+      - 223.5.5.5
 
   # 在以下列表的域名将不会被解析为 fake ip，这些域名相关的解析请求将会返回它们真实的 IP 地址
   fake-ip-filter:
@@ -217,7 +216,7 @@ rule-providers:
     path: ./rule-set/XJProxy.yaml
     behavior: classical
     url: https://izhangxm-surgio.oss-cn-beijing.aliyuncs.com/rule-provider/xj_proxy.yaml
-    interval: 60
+    interval: 7200
   GoogleVoice:
     type: http
     path: ./rule-set/GoogleVoice.yaml
@@ -240,7 +239,7 @@ rule-providers:
 rules:
 - GEOIP,private,DIRECT,no-resolve
 - IP-CIDR,192.168.0.0/16,DIRECT
-- GEOSITE,category-ads-all,REJECT
+# - GEOSITE,category-ads-all,REJECT
 # 自定义的高优先级规则
 - PROCESS-NAME,microsocks,Proxy
 - RULE-SET,XJProxy,Proxy
