@@ -19,6 +19,7 @@ class ClientApp():
     clashmeta = "clashmeta"
     shadowrocket = "shadowrocket"
     singbox = "singbox"
+    clashverge = "clash-verge"
 
 class ProxyProtocol():
     shadowsocks = "shadowsocks"

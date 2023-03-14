@@ -77,6 +77,8 @@ def api_subscrib():
                 client_type = ClientApp.shadowrocket
             elif "clashforwindows" in user_agent:
                 client_type = ClientApp.clashmeta
+            elif "clash-verge" in user_agent:
+                client_type = ClientApp.clashmeta
             else:
                 client_type = ClientApp.singbox
         
