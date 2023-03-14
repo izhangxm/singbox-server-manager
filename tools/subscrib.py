@@ -195,7 +195,7 @@ def singbox(server_profile, server_config,  config_tp, username, client_type="si
 
     server_url = server_profile['server_url']
 
-    client_shadowtls_versions = [2,3]
+    client_shadowtls_versions = server_profile['client_shadowtls_versions'].get(client_type, [])
     
     
     # 最终的出口结果，模板中的也要继承
@@ -274,14 +274,7 @@ def clashmeta(server_profile, server_config,  config_tp, username, client_type=C
     country_code = server_profile['contry']
     server_url = server_profile['server_url']
 
-    client_shadowtls_versions = []
-    
-    if client_type == ClientApp.clash:
-        client_shadowtls_versions = []
-    elif client_type == ClientApp.clashmeta:
-        client_shadowtls_versions = [2]
-    elif client_type == ClientApp.shadowrocket:
-        client_shadowtls_versions = [1, 2]
+    client_shadowtls_versions = server_profile['client_shadowtls_versions'].get(client_type, [])
     
 
     # 最终的出口结果，模板中的也要继承

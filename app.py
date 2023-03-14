@@ -1,14 +1,7 @@
 import flask
 import requests
 from argparse import Namespace
-import json
-import subprocess
-import time
 from pathlib import Path
-import ruamel.yaml
-import os
-from base64 import b64encode
-from secrets import token_bytes
 from copy import deepcopy
 import numpy as np
 from flask import Flask
@@ -78,16 +71,25 @@ def api_subscrib():
         password = request.args.get("password", None)
         client_type = request.args.get("client", None)
         
+        if client_type is None:
+            user_agent = request.headers.get("User-Agent", "").lower()
+            if "shadowrocket" in user_agent:
+                client_type = ClientApp.shadowrocket
+            elif "clashforwindows" in user_agent:
+                client_type = ClientApp.clashmeta
+            else:
+                client_type = ClientApp.singbox
+        
         if not username or not password:
-            raise Exception("miss uname or password or client")
+            raise Exception("miss uname or password ")
 
         server_profile = tools.load_server_profile()
         users = server_profile['users']
-        
-        if not users.get(username):
+        users_dict = { ele['name']:ele for ele in users }
+        if username not in users_dict.keys():
             raise Exception("user not found")
         
-        user_auth = users[username]['auth']
+        user_auth = users_dict[username]['auth']
         assert user_auth == password, "password mismatch"
         
         config_file = server_profile['dst_server_cfg']
@@ -117,7 +119,6 @@ def api_subscrib():
     except Exception as e:
         resp_data['code'] = 0
         resp_data['info'] = 'Failed: ' + str(e)
-        raise e
     return resp_data
 
 @app.route("/serverstate")
@@ -176,7 +177,7 @@ def print_request_info():
 
 def main():
     # 运行app
-    app.run(host="0.0.0.0", port=8180,debug=False)
+    app.run(host="0.0.0.0", port=8180,debug=True)
 
 
 if __name__ == "__main__":

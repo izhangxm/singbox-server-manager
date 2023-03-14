@@ -48,6 +48,9 @@ def xj_update_dict(base:dict, update:dict):
 def load_server_profile(server_profile_file="./profile.yaml"):
     # server_info = json.load(open(args.server_info, 'r'))
     server_profile = yaml.load(open(server_profile_file, 'r'))
+    users = yaml.load(open(server_profile["user_profile_path"], 'r'))
+    server_profile['users'] = users['users']
+    
     return server_profile
 
 
